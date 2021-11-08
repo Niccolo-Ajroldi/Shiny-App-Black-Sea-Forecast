@@ -5,21 +5,46 @@
 #' Point predictor: EK vs Concurrent
 #' 
 
-library("shiny")
-library("shinythemes")
-library('plotly')
-library("dplyr")
+# WARNING: all packages are built under R version 4.05
+# Current R Version: 4.0.3
+# Update R version if there are some problems
+
+#install.packages("raster")
+#install.packages("plotly")
+#install.packages("dplyr")
+#install.packages("tidyr")
+#install.packages("RColorBrewer")
+#install.packages("rstudioapi")
+#install.packages("packrat")
+#install.packages("rsconnect")
+#install.packages("shiny")
+#install.packages("shinydashboard")
+#install.packages("shinythemes")
+
+library(raster)
+library(shiny)
+#library(shinydashboard)
+#library(shinythemes)
+library(plotly)
+library(dplyr)
+library(tidyr)
+library(RColorBrewer)
+library(rstudioapi)
+library(packrat)
+library(rsconnect)
 
 # Data -------------------------------------------------------------------------
 
-setwd("D:/Poli/TESI/Code/Time-Series-CP/FAR_2D/Band_visualization/Shiny/Interactive/my_app")
+#setwd("D:/Poli/TESI/Code/Shiny_App_Black_Sea/my_app")
 load("data/y_bands.RData")
+load("data/width.RData")
 
 # Parameters -------------------------------------------------------------------
 
 # num of points in the grid
 n_points = sum(indexes_not_NA)
 n_points # 
+
 
 # grid
 length_grid = n_points
@@ -44,13 +69,12 @@ dates.asDate = as.character(dates.asDate)
 dates.list = as.list(dates.asDate)
 names(dates.list) = dates.asDate
 
-col.brewer = ""
+#display.brewer.all(type = 'seq')
+#col.brewer = "GnBu"
+col.brewer = "YlGnBu"
+
 
 # Shiny ------------------------------------------------------------------------
-
-library(shiny)
-library(shinydashboard)
-library(tidyr)
 
 # UI ---------------------------------------------------------------------------
 
@@ -60,20 +84,40 @@ ui <- fluidPage(
   # App title ----
   titlePanel("Black Sea Forecasting"),
   
-  # Panel for inputs ----
-  selectInput("date", h3("Select date"), 
-              choices = dates.list, selected = dates.list[1]),
   
-  # Horizontal rule
-  hr(),
+  fluidRow(
+    column(3,
+           h3("Select date"),
+           #helpText("Select a date from the list."),
+           selectInput(inputId = "date", 
+                       label=NULL,
+                       choices = dates.list, selected = dates.list[1])
+    ),
+    column(3,
+           h3("Color scale"),
+           #helpText("Either or"),
+           radioButtons(inputId = "legend_scale", 
+                        label=NULL,
+                        choices = list("All rasters on the same scale"  = "same",
+                                       #"Observed & Predicted on same scale" = "same_12",
+                                       "Rasters on different scales" = "diff"),
+                        selected = "same"),
+           br()
+    ),
+    column(3,
+           h3("Band Width"),
+           textOutput(outputId = "width")
+    ),
+    column(3)
+  ),
   
-  # Sidebar layout with input and output definitions ----
+  
   fluidRow(
     column(6,
            plotlyOutput(outputId = "plot_true")
     ),
     column(6,
-          plotlyOutput(outputId = "plot_pred")
+           plotlyOutput(outputId = "plot_pred")
     )
   ),
   fluidRow(
@@ -99,9 +143,23 @@ ui <- fluidPage(
 # Define server logic required to draw a histogram ----
 server <- function(input, output) {
   
+  # WIDTH
+  output$width = renderText({
+    
+    date.index = which(dates.asDate==input$date)
+    round(width[date.index,],6)
+    
+  })
+  
   # OBSERVED SURFACE
   output$plot_true <- renderPlotly({
-    library(raster)
+    
+    limits =  switch(input$legend_scale, 
+                     "same"=c(minn,maxx), 
+                     #"same_12"=c(minn.no.bands, maxx.no.bands),
+                     "diff"=NULL)
+    
+    #library(raster)
     date.index = which(dates.asDate==input$date)
     title.string = paste0("Observed surface on ", dates.asDate[date.index])
     
@@ -112,15 +170,23 @@ server <- function(input, output) {
     names(rasdf) = c("lon", "lat", "value")
     p <- ggplot() + 
       geom_raster(data = rasdf, aes(x = lon, y = lat, fill=value)) +
-      labs(xlab="Longitude", ylab="Latitude", title = title.string) +
-      scale_fill_gradientn(colours = RColorBrewer::brewer.pal(n = 9, name = "Blues"), 
-                           limits=c(minn.no.bands, maxx.no.bands))
+      ggtitle(title.string) + 
+      xlab("Longitude") + 
+      ylab("Latitude") +
+      scale_fill_gradientn(name="Value",
+                           colours = RColorBrewer::brewer.pal(n=9, name=col.brewer), 
+                           limits=limits)
     plotly::ggplotly(p)
   })
   
   # PREDICTED SURFACE
   output$plot_pred <- renderPlotly({
-    library(raster)
+    
+    limits =  switch(input$legend_scale, 
+                     "same"=c(minn,maxx), 
+                     #"same_12"=c(minn.no.bands, maxx.no.bands),
+                     "diff"=NULL)
+    #library(raster)
     date.index = which(dates.asDate==input$date)
     title.string = paste0("Predicted surface on ", dates.asDate[date.index])
     
@@ -131,15 +197,23 @@ server <- function(input, output) {
     names(rasdf) = c("lon", "lat", "value")
     p <- ggplot() + 
       geom_raster(data = rasdf, aes(x = lon, y = lat, fill=value)) +
-      labs(xlab="Longitude", ylab="Latitude", title = title.string) +
-      scale_fill_gradientn(colours = RColorBrewer::brewer.pal(n = 9, name = "Blues"), 
-                           limits=c(minn.no.bands, maxx.no.bands))
+      ggtitle(title.string) + 
+      xlab("Longitude") + 
+      ylab("Latitude") +
+      scale_fill_gradientn(name="Value",
+                           colours = RColorBrewer::brewer.pal(n=9, name=col.brewer), 
+                           limits=limits)
     plotly::ggplotly(p)
   })
   
   # BAND LOWER BOUND
   output$plot_lower <- renderPlotly({
-    library(raster)
+    
+    limits =  switch(input$legend_scale, 
+                     "same"=c(minn,maxx), 
+                     "diff"=NULL)
+    
+    #library(raster)
     date.index = which(dates.asDate==input$date)
     title.string = paste0("Band lower bound on ", dates.asDate[date.index])
     
@@ -150,15 +224,23 @@ server <- function(input, output) {
     names(rasdf) = c("lon", "lat", "value")
     p <- ggplot() + 
       geom_raster(data = rasdf, aes(x = lon, y = lat, fill=value)) +
-      labs(xlab="Longitude", ylab="Latitude", title = title.string) +
-      scale_fill_gradientn(colours = RColorBrewer::brewer.pal(n = 9, name = "Blues"), 
-                           limits=c(minn, maxx))
+      ggtitle(title.string) + 
+      xlab("Longitude") + 
+      ylab("Latitude") +
+      scale_fill_gradientn(name="Value",
+                           colours = RColorBrewer::brewer.pal(n=9, name=col.brewer), 
+                           limits=limits)
     plotly::ggplotly(p)
   })
   
   # BAND UPPER BOUND
   output$plot_upper <- renderPlotly({
-    library(raster)
+    
+    limits =  switch(input$legend_scale, 
+                     "same"=c(minn,maxx), 
+                     "diff"=NULL)
+    
+    #library(raster)
     date.index = which(dates.asDate==input$date)
     title.string = paste0("Band upper bound on ", dates.asDate[date.index])
     
@@ -169,15 +251,18 @@ server <- function(input, output) {
     names(rasdf) = c("lon", "lat", "value")
     p <- ggplot() + 
       geom_raster(data = rasdf, aes(x = lon, y = lat, fill=value)) +
-      labs(xlab="Longitude", ylab="Latitude", title = title.string) +
-      scale_fill_gradientn(colours = RColorBrewer::brewer.pal(n = 9, name = "Blues"), 
-                           limits=c(minn, maxx))
+      ggtitle(title.string) + 
+      xlab("Longitude") + 
+      ylab("Latitude") +
+      scale_fill_gradientn(name="Value",
+                           colours = RColorBrewer::brewer.pal(n=9, name=col.brewer), 
+                           limits=limits)
     plotly::ggplotly(p)
   })
   
-  
+  # POINTS INSIDE/OUTSIDE BAND
   output$plot_error <- renderPlot({
-    library(raster)
+    #library(raster)
     date.index = which(dates.asDate==input$date)
     title.string = paste0("Observed surface on ", dates.asDate[date.index])
     
@@ -187,18 +272,25 @@ server <- function(input, output) {
     r = flip(r,2)
     
     # dataframe
-    val <- getValues(r)
-    xy <- as.data.frame(xyFromCell(r,1:ncell(r)))
-    xy <- cbind(xy,val)
+    val = getValues(r)
+    val = as.factor(val)
+    xy = as.data.frame(xyFromCell(r,1:ncell(r)))
+    xy = cbind(xy,val)
     head(xy)
     
-    ggplot(na.omit(xy), aes(x=x, y=y, fill=val)) + 
-      geom_raster() + 
-      coord_equal() +
-      scale_fill_manual(name="Status", 
-                        values = c("TRUE"="dodgerblue3","FALSE"="firebrick1"), 
-                        labels=c("Points inside","Points outside")) +
-      labs(xlab="Longitude", ylab="Latitude", title = "Points inside/outside prediction bands")
+    p = ggplot(na.omit(xy), aes(x=x, y=y, fill=val)) + 
+          geom_raster() + 
+          scale_fill_manual(name="Status", 
+                            values = c("TRUE"="dodgerblue3","FALSE"="firebrick1"), 
+                            labels=c("Points inside","Points outside")) +
+      theme(text=element_text(size=16,  family="sans"),
+            plot.title = element_text(size = 18),
+            legend.title = element_text(size = 14),
+            legend.text = element_text(size = 12)) +
+      ggtitle("Points inside/outside prediction bands") + 
+      xlab("Longitude") + 
+      ylab("Latitude")
+    p
   })
   
 }
