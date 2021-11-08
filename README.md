@@ -24,11 +24,11 @@ The panel displays the following surfaces:
 
 
 <p align="center">
-  <img src="https://github.com/Niccolo-Ajroldi/Shiny-App-Black-Sea-Forecast/blob/master/Pics/Screenshot_APP_3.png" width="941.5" height="367.5" />
+  <img src="https://github.com/Niccolo-Ajroldi/Shiny-App-Black-Sea-Forecast/blob/master/Pics/Screenshot_APP_3.png" width="936" height="248.5" />
 </p>
 
 <p align="center">
-  <img src="https://github.com/Niccolo-Ajroldi/Shiny-App-Black-Sea-Forecast/blob/master/Pics/Screenshot_APP_4.png" width="941.5" height="367.5" />
+  <img src="https://github.com/Niccolo-Ajroldi/Shiny-App-Black-Sea-Forecast/blob/master/Pics/Screenshot_APP_4.png" width="872" height="246" />
 </p>
 
 The forecasting algorithm choosen for his application is a **Functional Autoregressive process** of order one.
