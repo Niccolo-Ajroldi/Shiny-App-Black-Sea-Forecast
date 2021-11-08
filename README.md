@@ -20,7 +20,7 @@ The panel displays the following surfaces:
 - predicted surface
 - surface defyining prediction band's lower bound
 - surface defyining prediction band's upper bound
-- points outside the prediction band (if any)
+- points inside and outside the prediction band
 
 
 <p align="center">
