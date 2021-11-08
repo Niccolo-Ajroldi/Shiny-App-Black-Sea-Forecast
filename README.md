@@ -24,5 +24,6 @@ The panel displays the following surfaces:
 
 The forecasting algorithm choosen for his application is a **Functional Autoregressive process** of order one.
 Prediction bands are obtained with **Conformal Prediction**, a versatile **nonparametric** technique used to quantify uncertainty in prediction problems. Such method has been extended to allow for time series of functions defined ona bivariate domain. Nominal coverage of prediction bands is fixed to 90%.
+The procedure is applied to the time series of second differences of sea level anomalies.
 
 The webapp is developed using [Shiny App](https://shiny.rstudio.com/).
