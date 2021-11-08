@@ -12,7 +12,7 @@ Data are provided by [Copernicus Climate Change Service](https://climate.coperni
 </p>
 
 <p align="center">
-  <img src="https://github.com/Niccolo-Ajroldi/Shiny-App-Black-Sea-Forecast/blob/master/Pics/Screenshot_APP_2.png" width="941.5" height="367.5" />
+  <img src="https://github.com/Niccolo-Ajroldi/Shiny-App-Black-Sea-Forecast/blob/master/Pics/Screenshot_APP_2.png" width="944.5" height="367" />
 </p>
 
 The panel displays the following surfaces:
