@@ -5,10 +5,10 @@ account: niccolo-ajroldi
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 5067352
-bundleId: 5232979
+bundleId: 5233085
 url: https://niccolo-ajroldi.shinyapps.io/Black-Sea-Forecasting/
-when: 1636481568.33611
-lastSyncTime: 1636481568.33611
+when: 1636483099.52832
+lastSyncTime: 1636483099.52832
 asMultiple: FALSE
 asStatic: FALSE
 ignoredFiles: data/BS_diff.RData|data/coverage.RData

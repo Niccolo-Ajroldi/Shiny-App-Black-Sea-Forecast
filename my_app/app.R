@@ -297,7 +297,6 @@ server <- function(input, output) {
     val = as.factor(val)
     xy = as.data.frame(xyFromCell(r,1:ncell(r)))
     xy = cbind(xy,val)
-    head(xy)
     
     p = ggplot(na.omit(xy), aes(x=x, y=y, fill=val)) + 
           geom_raster() + 
