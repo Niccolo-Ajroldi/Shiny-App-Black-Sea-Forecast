@@ -23,8 +23,8 @@
 
 library(raster)
 library(shiny)
-#library(shinydashboard)
-#library(shinythemes)
+library(shinydashboard)
+library(shinythemes)
 library(plotly)
 library(dplyr)
 library(tidyr)
@@ -73,6 +73,38 @@ names(dates.list) = dates.asDate
 #col.brewer = "GnBu"
 col.brewer = "YlGnBu"
 
+# Auxiliary Functions ----------------------------------------------------------
+
+my_plot_raster = function(data, title.string, limits){
+  
+  r = raster(data, xmn=min(lon), xmx=max(lon), ymn=min(lat), ymx=max(lat), 
+             crs=CRS("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs+ towgs84=0,0,0"))
+  r = flip(r,2)
+  rasdf <- as.data.frame(r, xy=TRUE)%>%drop_na()
+  names(rasdf) = c("lon", "lat", "value")
+  p <- ggplot() + 
+    geom_raster(data = rasdf, aes(x = lon, y = lat, fill=value)) +
+    ggtitle(title.string) + 
+    xlab("Longitude") + 
+    ylab("Latitude") +
+    scale_fill_gradientn(name="Value",
+                         colours = RColorBrewer::brewer.pal(n=9, name=col.brewer), 
+                         limits=limits)
+  plotly::ggplotly(p)
+  
+}
+
+my_plot_contour = function(data, title.string, limits){
+  
+  Value = data
+  p = plot_ly(z = ~Value, x = ~lon, y = ~lat,
+              type = "contour", zmin=limits[1], zmax=limits[2]) %>%
+    layout(title = title.string,
+           xaxis = list(title = 'Longitude'), 
+           yaxis = list(title = 'Latitude'))
+  p
+  
+}
 
 # Shiny ------------------------------------------------------------------------
 
@@ -95,20 +127,27 @@ ui <- fluidPage(
     ),
     column(3,
            h3("Color scale"),
-           #helpText("Either or"),
            radioButtons(inputId = "legend_scale", 
                         label=NULL,
-                        choices = list("All rasters on the same scale"  = "same",
+                        choices = list("All plots on the same scale"  = "same",
                                        #"Observed & Predicted on same scale" = "same_12",
-                                       "Rasters on different scales" = "diff"),
+                                       "Plots on different scales" = "diff"),
                         selected = "same"),
+           br()
+    ),
+    column(3,
+           h3("Plot type"),
+           radioButtons(inputId = "plot_type", 
+                        label=NULL,
+                        choices = list("Contour plot"  = "contour",
+                                       "Rasters plot"  = "raster"),
+                        selected = "contour"),
            br()
     ),
     column(3,
            h3("Band Width"),
            textOutput(outputId = "width")
-    ),
-    column(3)
+    )
   ),
   
   
@@ -154,117 +193,99 @@ server <- function(input, output) {
   # OBSERVED SURFACE
   output$plot_true <- renderPlotly({
     
-    limits =  switch(input$legend_scale, 
-                     "same"=c(minn,maxx), 
-                     #"same_12"=c(minn.no.bands, maxx.no.bands),
-                     "diff"=NULL)
+    limits = switch(input$legend_scale, 
+                    "same"=c(minn,maxx), #"same_12"=c(minn.no.bands, maxx.no.bands),
+                    "diff"=NULL)
     
-    #library(raster)
+    # retrieve plot index
     date.index = which(dates.asDate==input$date)
+    
+    # data to plot
+    data = t(y.true.array[,,date.index])
+    
+    # title
     title.string = paste0("Observed surface on ", dates.asDate[date.index])
     
-    r = raster(t(y.true.array[,,date.index]), xmn=min(lon), xmx=max(lon), ymn=min(lat), ymx=max(lat), 
-               crs=CRS("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs+ towgs84=0,0,0"))
-    r = flip(r,2)
-    rasdf <- as.data.frame(r, xy=TRUE)%>%drop_na()
-    names(rasdf) = c("lon", "lat", "value")
-    p <- ggplot() + 
-      geom_raster(data = rasdf, aes(x = lon, y = lat, fill=value)) +
-      ggtitle(title.string) + 
-      xlab("Longitude") + 
-      ylab("Latitude") +
-      scale_fill_gradientn(name="Value",
-                           colours = RColorBrewer::brewer.pal(n=9, name=col.brewer), 
-                           limits=limits)
-    plotly::ggplotly(p)
+    # plot
+    switch(input$plot_type, 
+           "raster"  = my_plot_raster (data, title.string, limits),
+           "contour" = my_plot_contour(data, title.string, limits))
   })
   
   # PREDICTED SURFACE
   output$plot_pred <- renderPlotly({
     
-    limits =  switch(input$legend_scale, 
-                     "same"=c(minn,maxx), 
-                     #"same_12"=c(minn.no.bands, maxx.no.bands),
-                     "diff"=NULL)
-    #library(raster)
+    limits = switch(input$legend_scale, 
+                    "same"=c(minn,maxx), #"same_12"=c(minn.no.bands, maxx.no.bands),
+                    "diff"=NULL)
+    
+    # retrieve plot index
     date.index = which(dates.asDate==input$date)
+    
+    # data to plot
+    data = t(y.predicted.array[,,date.index])
+    
+    # title
     title.string = paste0("Predicted surface on ", dates.asDate[date.index])
     
-    r = raster(t(y.predicted.array[,,date.index]), xmn=min(lon), xmx=max(lon), ymn=min(lat), ymx=max(lat), 
-               crs=CRS("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs+ towgs84=0,0,0"))
-    r = flip(r,2)
-    rasdf <- as.data.frame(r, xy=TRUE)%>%drop_na()
-    names(rasdf) = c("lon", "lat", "value")
-    p <- ggplot() + 
-      geom_raster(data = rasdf, aes(x = lon, y = lat, fill=value)) +
-      ggtitle(title.string) + 
-      xlab("Longitude") + 
-      ylab("Latitude") +
-      scale_fill_gradientn(name="Value",
-                           colours = RColorBrewer::brewer.pal(n=9, name=col.brewer), 
-                           limits=limits)
-    plotly::ggplotly(p)
+    # plot
+    switch(input$plot_type, 
+           "raster"  = my_plot_raster (data, title.string, limits),
+           "contour" = my_plot_contour(data, title.string, limits))
   })
   
   # BAND LOWER BOUND
   output$plot_lower <- renderPlotly({
     
-    limits =  switch(input$legend_scale, 
-                     "same"=c(minn,maxx), 
-                     "diff"=NULL)
+    limits = switch(input$legend_scale, 
+                    "same"=c(minn,maxx), #"same_12"=c(minn.no.bands, maxx.no.bands),
+                    "diff"=NULL)
     
-    #library(raster)
+    # retrieve plot index
     date.index = which(dates.asDate==input$date)
-    title.string = paste0("Band lower bound on ", dates.asDate[date.index])
     
-    r = raster(t(band.lower.array[,,date.index]), xmn=min(lon), xmx=max(lon), ymn=min(lat), ymx=max(lat), 
-               crs=CRS("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs+ towgs84=0,0,0"))
-    r = flip(r,2)
-    rasdf <- as.data.frame(r, xy=TRUE)%>%drop_na()
-    names(rasdf) = c("lon", "lat", "value")
-    p <- ggplot() + 
-      geom_raster(data = rasdf, aes(x = lon, y = lat, fill=value)) +
-      ggtitle(title.string) + 
-      xlab("Longitude") + 
-      ylab("Latitude") +
-      scale_fill_gradientn(name="Value",
-                           colours = RColorBrewer::brewer.pal(n=9, name=col.brewer), 
-                           limits=limits)
-    plotly::ggplotly(p)
+    # data to plot
+    data = t(band.lower.array[,,date.index])
+    
+    # title
+    title.string = paste0("Prediction band lower bound on ", dates.asDate[date.index])
+    
+    # plot
+    switch(input$plot_type, 
+           "raster"  = my_plot_raster (data, title.string, limits),
+           "contour" = my_plot_contour(data, title.string, limits))
   })
   
   # BAND UPPER BOUND
   output$plot_upper <- renderPlotly({
     
-    limits =  switch(input$legend_scale, 
-                     "same"=c(minn,maxx), 
-                     "diff"=NULL)
+    limits = switch(input$legend_scale, 
+                    "same"=c(minn,maxx), #"same_12"=c(minn.no.bands, maxx.no.bands),
+                    "diff"=NULL)
     
-    #library(raster)
+    # retrieve plot index
     date.index = which(dates.asDate==input$date)
-    title.string = paste0("Band upper bound on ", dates.asDate[date.index])
     
-    r = raster(t(band.upper.array[,,date.index]), xmn=min(lon), xmx=max(lon), ymn=min(lat), ymx=max(lat), 
-               crs=CRS("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs+ towgs84=0,0,0"))
-    r = flip(r,2)
-    rasdf <- as.data.frame(r, xy=TRUE)%>%drop_na()
-    names(rasdf) = c("lon", "lat", "value")
-    p <- ggplot() + 
-      geom_raster(data = rasdf, aes(x = lon, y = lat, fill=value)) +
-      ggtitle(title.string) + 
-      xlab("Longitude") + 
-      ylab("Latitude") +
-      scale_fill_gradientn(name="Value",
-                           colours = RColorBrewer::brewer.pal(n=9, name=col.brewer), 
-                           limits=limits)
-    plotly::ggplotly(p)
+    # data to plot
+    data = t(band.upper.array[,,date.index])
+    
+    # title
+    title.string = paste0("Prediction band upper bound on ", dates.asDate[date.index])
+    
+    # plot
+    switch(input$plot_type, 
+           "raster"  = my_plot_raster (data, title.string, limits),
+           "contour" = my_plot_contour(data, title.string, limits))
   })
   
   # POINTS INSIDE/OUTSIDE BAND
   output$plot_error <- renderPlot({
-    #library(raster)
+    
+    # retrieve plot index
     date.index = which(dates.asDate==input$date)
-    title.string = paste0("Observed surface on ", dates.asDate[date.index])
+    
+    # title
+    title.string = paste0("Points inside/outside prediction bands on ", dates.asDate[date.index])
     
     # raster
     r = raster(t(errors[,,date.index]), xmn=min(lon), xmx=max(lon), ymn=min(lat), ymx=max(lat), 
@@ -287,7 +308,7 @@ server <- function(input, output) {
             plot.title = element_text(size = 18),
             legend.title = element_text(size = 14),
             legend.text = element_text(size = 12)) +
-      ggtitle("Points inside/outside prediction bands") + 
+      ggtitle(title.string) + 
       xlab("Longitude") + 
       ylab("Latitude")
     p

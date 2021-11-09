@@ -1,0 +1,5 @@
+# Ignore specific files:
+gg_raster.R
+
+# Ignore files by extension:
+.Rhistory
