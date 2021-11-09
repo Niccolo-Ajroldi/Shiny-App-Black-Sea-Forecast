@@ -88,7 +88,7 @@ my_plot_raster = function(data, title.string, limits){
     xlab("Longitude") + 
     ylab("Latitude") +
     scale_fill_gradientn(name="Value",
-                         colours = RColorBrewer::brewer.pal(n=9, name=col.brewer), 
+                         colours = base::rev(RColorBrewer::brewer.pal(n=9, name=col.brewer)), # reverse color palette
                          limits=limits)
   plotly::ggplotly(p)
   
