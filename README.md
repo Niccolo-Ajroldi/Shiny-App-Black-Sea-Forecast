@@ -12,7 +12,7 @@ Data are provided by [Copernicus Climate Change Service](https://climate.coperni
 </p>
 
 <p align="center">
-  <img src="https://github.com/Niccolo-Ajroldi/Shiny-App-Black-Sea-Forecast/blob/master/Pics/Screenshot_APP_2.png" width="941.5" height="367.5" />
+  <img src="https://github.com/Niccolo-Ajroldi/Shiny-App-Black-Sea-Forecast/blob/master/Pics/Screenshot_APP_2.png" width="944.5" height="367" />
 </p>
 
 The panel displays the following surfaces:
@@ -20,7 +20,16 @@ The panel displays the following surfaces:
 - predicted surface
 - surface defyining prediction band's lower bound
 - surface defyining prediction band's upper bound
-- points outside the prediction band (if any)
+- points inside and outside the prediction band
+
+
+<p align="center">
+  <img src="https://github.com/Niccolo-Ajroldi/Shiny-App-Black-Sea-Forecast/blob/master/Pics/Screenshot_APP_3.png" width="936" height="248.5" />
+</p>
+
+<p align="center">
+  <img src="https://github.com/Niccolo-Ajroldi/Shiny-App-Black-Sea-Forecast/blob/master/Pics/Screenshot_APP_4.png" width="872" height="246" />
+</p>
 
 The forecasting algorithm choosen for his application is a **Functional Autoregressive process** of order one.
 Prediction bands are obtained with **Conformal Prediction**, a versatile **nonparametric** technique used to quantify uncertainty in prediction problems. Such method has been extended to allow for time series of functions defined ona bivariate domain. Nominal coverage of prediction bands is fixed to 90%.
